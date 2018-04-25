@@ -2,7 +2,6 @@ import factory from './factory'
 import slate from '../../packages/slate/package.json'
 import slateBase64Serializer from '../../packages/slate-base64-serializer/package.json'
 import slateDevLogger from '../../packages/slate-dev-logger/package.json'
-import slateDevBenchMark from '../../packages/slate-dev-benchmark/package.json'
 import slateHtmlSerializer from '../../packages/slate-html-serializer/package.json'
 import slateHyperscript from '../../packages/slate-hyperscript/package.json'
 import slatePlainSerializer from '../../packages/slate-plain-serializer/package.json'
@@ -15,7 +14,6 @@ const configurations = [
   ...factory(slate),
   ...factory(slateBase64Serializer),
   ...factory(slateDevLogger),
-  ...factory(slateDevBenchMark),
   ...factory(slateHtmlSerializer),
   ...factory(slateHyperscript),
   ...factory(slatePlainSerializer),
