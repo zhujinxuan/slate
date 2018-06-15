@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/server'
-import assert from 'assert'
+import { t as assert } from 'jest-t-assert' // eslint-disable-line import/no-extraneous-dependencies
 import clean from '../helpers/clean'
 import fs from 'fs-promise' // eslint-disable-line import/no-extraneous-dependencies
 import { JSDOM } from 'jsdom' // eslint-disable-line import/no-extraneous-dependencies
-import { Editor } from '../..'
+import { Editor } from '../../src'
 import { basename, extname, resolve } from 'path'
 
 /**
@@ -35,7 +35,7 @@ describe('rendering', () => {
         .replace(/\n/gm, '')
         .replace(/>\s*</g, '><')
 
-      assert.equal(clean(string), expected)
+      assert.is(clean(string), expected)
     })
   }
 })
