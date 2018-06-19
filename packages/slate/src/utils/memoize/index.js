@@ -1,4 +1,7 @@
-import { LEAF, UNDEFINED, UNSET } from './constants'
+/* global Map */
+import { UNDEFINED, UNSET } from './constants'
+import getIn from './getIn'
+import setIn from './setIn'
 
 /**
  * GLOBAL: True if memoization should is enabled.
@@ -24,7 +27,7 @@ let CACHE_KEY = 0
  * @return {Record}
  */
 
-function memoize(object, properties) {
+function memoize(object, properties, options = {}) {
   for (const property of properties) {
     const original = object[property]
 
@@ -39,12 +42,12 @@ function memoize(object, properties) {
       // If the cache key is different, previous caches must be cleared.
       if (CACHE_KEY !== this.__cache_key) {
         this.__cache_key = CACHE_KEY
-        this.__cache = new Map() // eslint-disable-line no-undef,no-restricted-globals
+        this.__cache = new Map() // eslint-disable-line no-restricted-globals
         this.__cache_no_args = {}
       }
 
       if (!this.__cache) {
-        this.__cache = new Map() // eslint-disable-line no-undef,no-restricted-globals
+        this.__cache = new Map() // eslint-disable-line no-restricted-globals
       }
       if (!this.__cache_no_args) {
         this.__cache_no_args = {}
@@ -52,15 +55,22 @@ function memoize(object, properties) {
 
       const takesArguments = args.length !== 0
 
-      let cachedValue
-      let keys
+      if (!takesArguments) {
+        const cachedValue = this.__cache_no_args[property]
 
-      if (takesArguments) {
-        keys = [property, ...args]
-        cachedValue = getIn(this.__cache, keys)
-      } else {
-        cachedValue = this.__cache_no_args[property]
+        // If we've got a result already, return it.
+        if (cachedValue !== UNSET) {
+          return cachedValue === UNDEFINED ? undefined : cachedValue
+        }
+
+        const value = original.apply(this, args)
+        const v = value === undefined ? UNDEFINED : value
+        this.__cache_no_args[property] = v
+        return value
       }
+
+      const keys = [property, ...args]
+      const cachedValue = getIn(this.__cache, keys, options)
 
       // If we've got a result already, return it.
       if (cachedValue !== UNSET) {
@@ -69,67 +79,11 @@ function memoize(object, properties) {
 
       // Otherwise calculate what it should be once and cache it.
       const value = original.apply(this, args)
-      const v = value === undefined ? UNDEFINED : value
-
-      if (takesArguments) {
-        this.__cache = setIn(this.__cache, keys, v)
-      } else {
-        this.__cache_no_args[property] = v
-      }
+      this.__cache = setIn(this.__cache, keys, value, options)
 
       return value
     }
   }
-}
-
-/**
- * Get a value at a key path in a tree of Map.
- *
- * If not set, returns UNSET.
- * If the set value is undefined, returns UNDEFINED.
- *
- * @param {Map} map
- * @param {Array} keys
- * @return {Any|UNSET|UNDEFINED}
- */
-
-function getIn(map, keys) {
-  for (const key of keys) {
-    map = map.get(key)
-    if (map === UNSET) return UNSET
-  }
-
-  return map.get(LEAF)
-}
-
-/**
- * Set a value at a key path in a tree of Map, creating Maps on the go.
- *
- * @param {Map} map
- * @param {Array} keys
- * @param {Any} value
- * @return {Map}
- */
-
-function setIn(map, keys, value) {
-  let parent = map
-  let child
-
-  for (const key of keys) {
-    child = parent.get(key)
-
-    // If the path was not created yet...
-    if (child === UNSET) {
-      child = new Map() // eslint-disable-line no-undef,no-restricted-globals
-      parent.set(key, child)
-    }
-
-    parent = child
-  }
-
-  // The whole path has been created, so set the value to the bottom most map.
-  child.set(LEAF, value)
-  return map
 }
 
 /**
